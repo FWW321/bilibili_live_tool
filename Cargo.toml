@@ -1,0 +1,36 @@
+[package]
+name = "bilibili_live_tool"
+version = "0.1.0"
+edition = "2024"
+description = "哔哩哔哩直播工具的Rust版本"
+authors = ["FWW <3223400498@qq.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/ChaceQC/bilibili_live_stream_code"
+keywords = ["bilibili", "live", "stream", "tool"]
+categories = ["multimedia", "web-programming"]
+
+[dependencies]
+reqwest = { version = "0.12", features = ["json", "cookies"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+qrcode = "0.14"
+image = "0.25"
+config = "0.15"
+clap = { version = "4.5", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1.11"
+thiserror = "2.0"
+url = "2.5"
+toml = "0.8"
+urlencoding = "2.1"
+ratatui = "0.29"
+crossterm = "0.29"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+opt-level = 3
