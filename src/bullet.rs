@@ -198,7 +198,7 @@ impl Bullet {
         &self.csrf
     }
     
-    /// 创建弹幕数据结构
+    /// 创建弹幕
     pub fn create_bullet_data(&self, msg: &str, color: Option<u32>, fontsize: Option<u32>) -> BulletData {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)

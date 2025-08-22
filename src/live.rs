@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize, Deserializer};
+use std::collections::HashMap;
 use crate::client::{BilibiliClient, ApiResponse};
 use crate::error::Result;
 
@@ -176,17 +177,18 @@ impl Live {
     pub async fn start_live(&self, area_id: u32) -> Result<LiveStreamData> {
         let url = "https://api.live.bilibili.com/room/v1/Room/startLive";
         
-        let room_id_str = self.room_id.to_string();
-        let area_id_str = area_id.to_string();
+        let mut params = HashMap::new();
+        params.insert("room_id".to_string(), self.room_id.to_string());
+        params.insert("area_v2".to_string(), area_id.to_string());
+        params.insert("platform".to_string(), "pc_link".to_string());
+        params.insert("backup_stream".to_string(), "0".to_string());
+        params.insert("type".to_string(), "2".to_string());
+        params.insert("csrf_token".to_string(), self.csrf.clone());
+        params.insert("csrf".to_string(), self.csrf.clone());
         
-        let data = vec![
-            ("room_id", room_id_str.as_str()),
-            ("platform", "pc_link"),
-            ("area_v2", area_id_str.as_str()),
-            ("backup_stream", "0"),
-            ("csrf_token", self.csrf.as_str()),
-            ("csrf", self.csrf.as_str()),
-        ];
+        // 使用App签名增强安全性
+        let signed_params = crate::sign::Signer::sign_live_request(params);
+        let data: Vec<_> = signed_params.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
         
         let response: ApiResponse<LiveStreamData> = self.client.post(url, &data).await?;
         let stream_data = response.data.ok_or_else(|| crate::error::BiliError::Live("获取推流信息失败".to_string()))?;
@@ -198,14 +200,15 @@ impl Live {
     pub async fn stop_live(&self) -> Result<()> {
         let url = "https://api.live.bilibili.com/room/v1/Room/stopLive";
         
-        let room_id_str = self.room_id.to_string();
+        let mut params = HashMap::new();
+        params.insert("room_id".to_string(), self.room_id.to_string());
+        params.insert("platform".to_string(), "pc_link".to_string());
+        params.insert("csrf_token".to_string(), self.csrf.clone());
+        params.insert("csrf".to_string(), self.csrf.clone());
         
-        let data = vec![
-            ("room_id", room_id_str.as_str()),
-            ("platform", "pc_link"),
-            ("csrf_token", self.csrf.as_str()),
-            ("csrf", self.csrf.as_str()),
-        ];
+        // 使用App签名增强安全性
+        let signed_params = crate::sign::Signer::sign_live_request(params);
+        let data: Vec<_> = signed_params.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
         
         let _response: ApiResponse<serde_json::Value> = self.client.post(url, &data).await?;
         
@@ -216,15 +219,16 @@ impl Live {
     pub async fn set_title(&self, title: &str) -> Result<()> {
         let url = "https://api.live.bilibili.com/room/v1/Room/update";
         
-        let room_id_str = self.room_id.to_string();
+        let mut params = HashMap::new();
+        params.insert("room_id".to_string(), self.room_id.to_string());
+        params.insert("platform".to_string(), "pc_link".to_string());
+        params.insert("title".to_string(), title.to_string());
+        params.insert("csrf_token".to_string(), self.csrf.clone());
+        params.insert("csrf".to_string(), self.csrf.clone());
         
-        let data = vec![
-            ("room_id", room_id_str.as_str()),
-            ("platform", "pc_link"),
-            ("title", title),
-            ("csrf_token", self.csrf.as_str()),
-            ("csrf", self.csrf.as_str()),
-        ];
+        // 使用App签名增强安全性
+        let signed_params = crate::sign::Signer::sign_live_request(params);
+        let data: Vec<_> = signed_params.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
         
         let _response: ApiResponse<serde_json::Value> = self.client.post(url, &data).await?;
         
@@ -235,17 +239,17 @@ impl Live {
     pub async fn set_area(&self, area_id: u32) -> Result<()> {
         let url = "https://api.live.bilibili.com/room/v1/Room/update";
         
-        let room_id_str = self.room_id.to_string();
-        let area_id_str = area_id.to_string();
+        let mut params = HashMap::new();
+        params.insert("room_id".to_string(), self.room_id.to_string());
+        params.insert("area_id".to_string(), area_id.to_string());
+        params.insert("activity_id".to_string(), "0".to_string());
+        params.insert("platform".to_string(), "pc_link".to_string());
+        params.insert("csrf_token".to_string(), self.csrf.clone());
+        params.insert("csrf".to_string(), self.csrf.clone());
         
-        let data = vec![
-            ("room_id", room_id_str.as_str()),
-            ("area_id", area_id_str.as_str()),
-            ("activity_id", "0"),
-            ("platform", "pc_link"),
-            ("csrf_token", self.csrf.as_str()),
-            ("csrf", self.csrf.as_str()),
-        ];
+        // 使用App签名增强安全性
+        let signed_params = crate::sign::Signer::sign_live_request(params);
+        let data: Vec<_> = signed_params.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
         
         let _response: ApiResponse<serde_json::Value> = self.client.post(url, &data).await?;
         

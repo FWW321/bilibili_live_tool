@@ -93,7 +93,7 @@ impl Auth {
         Ok((status_data, cookies_dict))
     }
     
-    /// 二维码登录流程
+    /// 登录
     pub async fn qr_login(&self) -> Result<UserInfo> {
         // 生成二维码
         let qr_data = self.generate_qrcode().await?;
@@ -129,7 +129,7 @@ impl Auth {
                         println!("二维码已扫描，等待确认...");
                     }
                     86101 => {
-                        // 已经在开始时显示过了，不再重复显示
+
                     }
                     _ => {
                         return Err(BiliError::Login(format!("登录失败: {}", status.message)));
@@ -138,7 +138,6 @@ impl Auth {
                 last_status_code = status.code;
             }
             
-            // 如果登录成功，跳出循环
             if status.code == 0 {
                 break;
             }
