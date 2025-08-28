@@ -1,32 +1,65 @@
-name: Release
+name: Build and Release
 
 on:
   push:
+    branches: [ master, main ]
     tags:
       - 'v*.*.*'
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'nightly'
+        type: choice
+        options:
+          - nightly
+          - beta
+          - stable
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-and-release:
-    name: Build and Release
+  build:
+    name: Build
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             artifact_name: bilibili_live_tool
             asset_name: bilibili_live_tool-linux-x86_64
             target: x86_64-unknown-linux-gnu
+            suffix: ""
+          - os: ubuntu-latest
+            artifact_name: bilibili_live_tool
+            asset_name: bilibili_live_tool-linux-aarch64
+            target: aarch64-unknown-linux-gnu
+            suffix: ""
           - os: windows-latest
             artifact_name: bilibili_live_tool.exe
             asset_name: bilibili_live_tool-windows-x86_64.exe
             target: x86_64-pc-windows-msvc
+            suffix: ".exe"
+          - os: windows-latest
+            artifact_name: bilibili_live_tool.exe
+            asset_name: bilibili_live_tool-windows-aarch64.exe
+            target: aarch64-pc-windows-msvc
+            suffix: ".exe"
+          - os: macos-latest
+            artifact_name: bilibili_live_tool
+            asset_name: bilibili_live_tool-macos-x86_64
+            target: x86_64-apple-darwin
+            suffix: ""
           - os: macos-latest
             artifact_name: bilibili_live_tool
             asset_name: bilibili_live_tool-macos-aarch64
             target: aarch64-apple-darwin
+            suffix: ""
 
     steps:
     - name: Checkout code
@@ -36,6 +69,7 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
       with:
         toolchain: stable
+        targets: ${{ matrix.target }}
 
     - name: Cache cargo registry
       uses: actions/cache@v4
@@ -44,25 +78,58 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install cross (for cross-compilation)
+      run: cargo install cross --git https://github.com/cross-rs/cross
 
     - name: Build release binary
-      run: cargo build --release --target ${{ matrix.target }}
+      run: |
+        if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
+          cargo build --release --target ${{ matrix.target }}
+        else
+          cross build --release --target ${{ matrix.target }}
+        fi
+      shell: bash
 
     - name: Strip debug symbols (Linux/macOS)
       if: matrix.os != 'windows-latest'
-      run: strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+      run: |
+        if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
+          strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+        else
+          strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+        fi
+      shell: bash
+
+    - name: Create archive (Unix)
+      if: matrix.os != 'windows-latest'
+      run: |
+        cd target/${{ matrix.target }}/release
+        tar czf ../../../${{ matrix.asset_name }}.tar.gz ${{ matrix.artifact_name }}
+        cd ../../..
+
+    - name: Create archive (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        cd target/${{ matrix.target }}/release
+        7z a ../../../${{ matrix.asset_name }}.zip ${{ matrix.artifact_name }}
+        cd ../../..
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.asset_name }}
-        path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+        path: |
+          ${{ matrix.asset_name }}.tar.gz
+          ${{ matrix.asset_name }}.zip
+        if-no-files-found: error
 
-  create-release:
-    name: Create Release
-    needs: build-and-release
+  release:
+    name: Release
+    needs: build
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
     permissions:
       contents: write
     steps:
@@ -72,35 +139,136 @@ jobs:
     - name: Download all artifacts
       uses: actions/download-artifact@v4
 
-    - name: Move artifacts to root
+    - name: Prepare release assets
       run: |
         ls -la
-        cp bilibili_live_tool-linux-x86_64/bilibili_live_tool ./bilibili_live_tool-linux-x86_64
-        cp bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool.exe ./bilibili_live_tool-windows-x86_64.exe
-        cp bilibili_live_tool-macos-aarch64/bilibili_live_tool ./bilibili_live_tool-macos-aarch64
-        chmod +x ./bilibili_live_tool-linux-x86_64 ./bilibili_live_tool-macos-aarch64
-        ls -la
+        mkdir -p release-assets
+        
+        # 复制并重命名所有平台的二进制文件
+        if [ -f "bilibili_live_tool-linux-x86_64/bilibili_live_tool-linux-x86_64.tar.gz" ]; then
+          cp bilibili_live_tool-linux-x86_64/bilibili_live_tool-linux-x86_64.tar.gz release-assets/
+        fi
+        
+        if [ -f "bilibili_live_tool-linux-aarch64/bilibili_live_tool-linux-aarch64.tar.gz" ]; then
+          cp bilibili_live_tool-linux-aarch64/bilibili_live_tool-linux-aarch64.tar.gz release-assets/
+        fi
+        
+        if [ -f "bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool-windows-x86_64.exe.zip" ]; then
+          cp bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool-windows-x86_64.exe.zip release-assets/
+        fi
+        
+        if [ -f "bilibili_live_tool-windows-aarch64.exe/bilibili_live_tool-windows-aarch64.exe.zip" ]; then
+          cp bilibili_live_tool-windows-aarch64.exe/bilibili_live_tool-windows-aarch64.exe.zip release-assets/
+        fi
+        
+        if [ -f "bilibili_live_tool-macos-x86_64/bilibili_live_tool-macos-x86_64.tar.gz" ]; then
+          cp bilibili_live_tool-macos-x86_64/bilibili_live_tool-macos-x86_64.tar.gz release-assets/
+        fi
+        
+        if [ -f "bilibili_live_tool-macos-aarch64/bilibili_live_tool-macos-aarch64.tar.gz" ]; then
+          cp bilibili_live_tool-macos-aarch64/bilibili_live_tool-macos-aarch64.tar.gz release-assets/
+        fi
+        
+        ls -la release-assets/
 
-    - name: Get version from tag
+    - name: Get version
       id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      run: |
+        if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        else
+          VERSION=$(date +'%Y%m%d-%H%M%S')-$(git rev-parse --short HEAD)
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
 
-    - name: Create Release
+    - name: Create or update release
       uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
         tag_name: ${{ steps.get_version.outputs.VERSION }}
         name: Release ${{ steps.get_version.outputs.VERSION }}
         body: |
-          ## Downloads
-          - **Linux**: `bilibili_live_tool-linux-x86_64`
-          - **Windows**: `bilibili_live_tool-windows-x86_64.exe`
-          - **macOS**: `bilibili_live_tool-macos-aarch64`
-        files: |
-          bilibili_live_tool-linux-x86_64
-          bilibili_live_tool-windows-x86_64.exe
-          bilibili_live_tool-macos-aarch64
-        generate_release_notes: false
+          ## 🚀 Release ${{ steps.get_version.outputs.VERSION }}
+          
+          ### 下载链接
+          
+          #### Linux
+          - [x86_64](bilibili_live_tool-linux-x86_64.tar.gz)
+          - [aarch64](bilibili_live_tool-linux-aarch64.tar.gz)
+          
+          #### Windows
+          - [x86_64](bilibili_live_tool-windows-x86_64.exe.zip)
+          - [aarch64](bilibili_live_tool-windows-aarch64.exe.zip)
+          
+          #### macOS
+          - [x86_64](bilibili_live_tool-macos-x86_64.tar.gz)
+          - [aarch64](bilibili_live_tool-macos-aarch64.tar.gz)
+          
+          ### 使用说明
+          - Linux/macOS: 下载后解压，运行 `./bilibili_live_tool`
+          - Windows: 下载后解压，运行 `bilibili_live_tool.exe`
+          
+          ### 系统要求
+          - 支持 x86_64 和 ARM64 架构
+          - Windows 10+
+          - macOS 10.15+
+          - Linux (glibc 2.31+)
+        files: release-assets/*
+        generate_release_notes: true
         draft: false
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Push to release branch
+      if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # 创建或切换到 release 分支
+        git checkout -B release
+        
+        # 清空 release 分支内容
+        git rm -rf . || true
+        
+        # 复制构建产物
+        cp -r release-assets/* ./ || true
+        
+        # 创建 README
+        cat > README.md << EOF
+        # Bilibili Live Tool - 最新构建
+        
+        这是自动构建的最新版本，基于主分支代码。
+        
+        ## 下载
+        
+        ### Linux
+        - [x86_64](bilibili_live_tool-linux-x86_64.tar.gz)
+        - [aarch64](bilibili_live_tool-linux-aarch64.tar.gz)
+        
+        ### Windows
+        - [x86_64](bilibili_live_tool-windows-x86_64.exe.zip)
+        - [aarch64](bilibili_live_tool-windows-aarch64.exe.zip)
+        
+        ### macOS
+        - [x86_64](bilibili_live_tool-macos-x86_64.tar.gz)
+        - [aarch64](bilibili_live_tool-macos-aarch64.tar.gz)
+        
+        ## 构建信息
+        - 构建时间: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        - Git SHA: ${{ github.sha }}
+        - 构建编号: ${{ github.run_number }}
+        
+        > 这是自动构建版本，基于最新代码构建。如需稳定版本，请查看 [Releases](../../releases) 页面。
+        EOF
+        
+        # 添加所有文件
+        git add .
+        
+        # 提交更改
+        git commit -m "Auto-build: ${{ steps.get_version.outputs.VERSION }}" || echo "No changes to commit"
+        
+        # 强制推送到 release 分支
+        git push -f origin release
