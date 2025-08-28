@@ -13,16 +13,6 @@
 nu scripts/release.nu [可选的版本号]
 ```
 
-#### PowerShell 用户 (Windows)
-```powershell
-.\scripts\release.ps1 [可选的版本号]
-```
-
-#### Bash 用户 (Linux/macOS)
-```bash
-./scripts/release.sh [可选的版本号]
-```
-
 ### 2. 自动流程
 
 运行发布脚本后：
@@ -51,15 +41,11 @@ GitHub Actions 会：
 ### 自动增加补丁版本
 ```bash
 nu scripts/release.nu
-# 或
-.\scripts\release.ps1
 ```
 
 ### 指定新版本号
 ```bash
 nu scripts/release.nu 1.2.3
-# 或
-.\scripts\release.ps1 1.2.3
 ```
 
 ## 构建产物
@@ -86,9 +72,6 @@ git push origin v1.2.3
 ### 常见问题
 
 1. **权限错误**：确保脚本有执行权限
-   ```bash
-   chmod +x scripts/release.sh  # Linux/macOS
-   ```
 
 2. **Git 错误**：确保你在 Git 仓库中且没有未提交的更改
 
