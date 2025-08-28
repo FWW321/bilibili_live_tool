@@ -154,7 +154,8 @@ def main [...args: string] {
     print $"($YELLOW)当前版本: $current_version($NC)"
 
     # 获取新版本号
-    let new_version = get_new_version $current_version ($args | get 0)
+    let input_version = if ($args | length) > 0 { $args.0 } else { "" }
+    let new_version = get_new_version $current_version $input_version
     
     if ($new_version == $current_version) {
         print $"($YELLOW)自动增加版本号: $current_version → $new_version($NC)"
