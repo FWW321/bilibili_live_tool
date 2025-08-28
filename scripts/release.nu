@@ -103,6 +103,13 @@ def commit_version_update [new_version: string] {
 # 创建标签
 def create_tag [new_version: string] {
     try {
+        # 检查标签是否已存在
+        let tag_exists = (git tag -l $"v($new_version)" | str trim | is-not-empty)
+        if $tag_exists {
+            print $"($RED)错误: 标签 v($new_version) 已存在($NC)"
+            exit 1
+        }
+        
         git tag -a ($"v($new_version)") -m ($"Release version ($new_version)")
         print $"($GREEN)已创建标签: v($new_version)($NC)"
     } catch {
