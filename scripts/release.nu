@@ -57,7 +57,7 @@ def validate_version [version: string] {
 
 # 获取新版本号
 def get_new_version [current: string, input?: string] {
-    if ($input | is-not-empty) {
+    if ($input != "" and $input != null) {
         let version = $input | str trim
         if (validate_version $version) {
             $version
