@@ -74,7 +74,9 @@ jobs:
 
     - name: Move artifacts to root
       run: |
-        find . -name "bilibili_live_tool*" -type f -exec mv {} . \;
+        cp bilibili_live_tool-linux-x86_64/bilibili_live_tool ./bilibili_live_tool-linux-x86_64
+        cp bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool.exe ./bilibili_live_tool-windows-x86_64.exe
+        cp bilibili_live_tool-macos-aarch64.dmg/bilibili_live_tool ./bilibili_live_tool-macos-aarch64
         ls -la
 
     - name: Get version from tag
