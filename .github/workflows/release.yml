@@ -8,16 +8,6 @@ on:
   pull_request:
     branches: [ master, main ]
   workflow_dispatch:
-    inputs:
-      release_type:
-        description: 'Release type'
-        required: true
-        default: 'nightly'
-        type: choice
-        options:
-          - nightly
-          - beta
-          - stable
 
 env:
   CARGO_TERM_COLOR: always
@@ -78,7 +68,7 @@ jobs:
     name: Release
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
     steps:
@@ -119,24 +109,11 @@ jobs:
         tag_name: ${{ steps.get_version.outputs.VERSION }}
         name: Release ${{ steps.get_version.outputs.VERSION }}
         body: |
-          ## 🚀 Release ${{ steps.get_version.outputs.VERSION }}
+          ## Release ${{ steps.get_version.outputs.VERSION }}
           
-          ### 下载链接
-          
-          #### Linux
-          - [x86_64](bilibili_live_tool-linux-x86_64)
-          
-          #### Windows
-          - [x86_64](bilibili_live_tool-windows-x86_64.exe)
-          
-          ### 使用说明
-          - Linux: 下载后直接运行 `./bilibili_live_tool`
-          - Windows: 下载后直接运行 `bilibili_live_tool.exe`
-          
-          ### 系统要求
-          - x86_64 架构
-          - Windows 10+
-          - Linux (glibc 2.31+)
+          ### Downloads
+          - [Linux x86_64](bilibili_live_tool-linux-x86_64)
+          - [Windows x86_64](bilibili_live_tool-windows-x86_64.exe)
         files: release-assets/*
         generate_release_notes: true
         draft: false
@@ -144,48 +121,3 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Push to release branch
-      if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        
-        # 创建或切换到 release 分支
-        git checkout -B release
-        
-        # 清空 release 分支内容
-        git rm -rf . || true
-        
-        # 复制构建产物
-        cp -r release-assets/* ./ || true
-        
-        # 创建 README
-        cat > README.md << EOF
-        # Bilibili Live Tool - 最新构建
-        
-        这是自动构建的最新版本，基于主分支代码。
-        
-        ## 下载
-        
-        ### Linux
-        - [x86_64](bilibili_live_tool-linux-x86_64)
-        
-        ### Windows
-        - [x86_64](bilibili_live_tool-windows-x86_64.exe)
-        
-        ## 构建信息
-        - 构建时间: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-        - Git SHA: ${{ github.sha }}
-        - 构建编号: ${{ github.run_number }}
-        
-        > 这是自动构建版本，基于最新代码构建。如需稳定版本，请查看 [Releases](../../releases) 页面。
-        EOF
-        
-        # 添加所有文件
-        git add .
-        
-        # 提交更改
-        git commit -m "Auto-build: ${{ steps.get_version.outputs.VERSION }}" || echo "No changes to commit"
-        
-        # 强制推送到 release 分支
-        git push -f origin release
