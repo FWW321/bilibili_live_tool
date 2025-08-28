@@ -81,7 +81,7 @@ def update_cargo_version [new_version: string] {
         let content = open Cargo.toml
         let updated = $content | upsert package.version $new_version
         $updated | save Cargo.toml --force
-        print $"($GREEN)已更新Cargo.toml版本号为: $new_version($NC)"
+        print $"($GREEN)已更新Cargo.toml版本号为: (" + $new_version + ")($NC)"
     } catch {
         print $"($RED)错误: 无法更新Cargo.toml($NC)"
         exit 1
@@ -92,7 +92,7 @@ def update_cargo_version [new_version: string] {
 def commit_version_update [new_version: string] {
     try {
         git add Cargo.toml
-        git commit -m $"chore: bump version to ($new_version)"
+        git commit -m $"chore: bump version to (" + $new_version + ")"
         print $"($GREEN)已提交版本更新($NC)"
     } catch {
         print $"($RED)错误: 无法提交更改($NC)"
@@ -103,8 +103,8 @@ def commit_version_update [new_version: string] {
 # 创建标签
 def create_tag [new_version: string] {
     try {
-        git tag -a $"v($new_version)" -m $"Release version ($new_version)"
-        print $"($GREEN)已创建标签: v$($new_version)($NC)"
+        git tag -a $"v(" + $new_version + ")" -m $"Release version (" + $new_version + ")"
+        print $"($GREEN)已创建标签: v(" + $new_version + ")($NC)"
     } catch {
         print $"($RED)错误: 无法创建标签($NC)"
         exit 1
@@ -115,7 +115,8 @@ def create_tag [new_version: string] {
 def push_to_remote [new_version: string] {
     try {
         print $"($YELLOW)推送到远程仓库...($NC)"
-        git push origin main
+        let current_branch = (git branch --show-current | str trim)
+        git push origin $current_branch
         git push origin $"v($new_version)"
         print $"($GREEN)推送成功！($NC)"
     } catch {
