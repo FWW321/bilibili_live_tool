@@ -176,8 +176,12 @@ def main [version?: string] {
     }
 
     # 执行发布流程
-    update_cargo_version $new_version
-    commit_version_update $new_version
+    if ($new_version != $current_version) {
+        update_cargo_version $new_version
+        commit_version_update $new_version
+    } else {
+        print $"($YELLOW)版本号未改变，跳过更新 Cargo.toml($NC)"
+    }
     create_tag $new_version
     push_to_remote $new_version
 
