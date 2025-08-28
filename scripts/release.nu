@@ -136,6 +136,7 @@ def get_repo_url [] {
 }
 
 # 主函数
+# 主函数将在其他Nu代码之后自动运行
 def main [version?: string] {
     print $"($YELLOW)哔哩哔哩直播工具 - 发布脚本($NC)"
     print "=================================="
@@ -183,6 +184,3 @@ def main [version?: string] {
     print $"($GREEN)发布成功！GitHub Actions 将自动构建并创建 Release($NC)"
     print $"($YELLOW)构建状态: https://github.com/($repo_url)/actions($NC)"
 }
-
-# 执行主函数
-main
