@@ -140,7 +140,6 @@ def get_repo_url [] {
             | str replace ".git$" "" 
             | str replace "^https://github.com/" "" 
             | str replace "^git@github.com:" ""
-            | str replace "^git@github\.com:" ""
         $clean_url
     } catch {
         "username/repository"
