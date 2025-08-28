@@ -71,6 +71,8 @@ jobs:
 
     - name: Download all artifacts
       uses: actions/download-artifact@v4
+      with:
+        path: .
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -85,9 +87,9 @@ jobs:
           - **Windows**: `bilibili_live_tool-windows-x86_64.exe`
           - **macOS**: `bilibili_live_tool-macos-aarch64`
         files: |
-          artifacts/bilibili_live_tool-linux-x86_64/bilibili_live_tool
-          artifacts/bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool.exe
-          artifacts/bilibili_live_tool-macos-aarch64/bilibili_live_tool
+          bilibili_live_tool-linux-x86_64
+          bilibili_live_tool-windows-x86_64.exe
+          bilibili_live_tool-macos-aarch64
         generate_release_notes: true
         draft: false
         prerelease: false
