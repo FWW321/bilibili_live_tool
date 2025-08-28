@@ -63,31 +63,14 @@ jobs:
     name: Create Release
     needs: build-and-release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Download all artifacts
       uses: actions/download-artifact@v4
-      with:
-        path: artifacts
-
-    - name: Get version from tag
-      id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-    - name: Generate changelog
-      id: changelog
-      run: |
-        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-        if [ -z "$PREVIOUS_TAG" ]; then
-          echo "changelog=Initial release ${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_OUTPUT
-        else
-          CHANGELOG=$(git log --pretty=format:"- %s" ${PREVIOUS_TAG}..HEAD)
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-        fi
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -96,29 +79,16 @@ jobs:
         name: Release ${{ steps.get_version.outputs.VERSION }}
         body: |
           ## Changes in ${{ steps.get_version.outputs.VERSION }}
-          ${{ steps.changelog.outputs.changelog }}
           
           ## Downloads
-          - **Linux**: `bilibili_live_tool-linux-amd64`
-          - **Windows**: `bilibili_live_tool-windows-amd64.exe`
-          - **macOS**: `bilibili_live_tool-macos-amd64`
-          
-          ## Installation
-          
-          ### Linux/macOS
-          ```bash
-          chmod +x bilibili_live_tool-*
-          ./bilibili_live_tool-*
-          ```
-          
-          ### Windows
-          ```powershell
-          bilibili_live_tool-windows-amd64.exe
-          ```
+          - **Linux**: `bilibili_live_tool-linux-x86_64`
+          - **Windows**: `bilibili_live_tool-windows-x86_64.exe`
+          - **macOS**: `bilibili_live_tool-macos-aarch64`
         files: |
           artifacts/bilibili_live_tool-linux-x86_64/bilibili_live_tool
           artifacts/bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool.exe
           artifacts/bilibili_live_tool-macos-aarch64/bilibili_live_tool
+        generate_release_notes: true
         draft: false
         prerelease: false
       env:

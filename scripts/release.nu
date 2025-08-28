@@ -132,20 +132,6 @@ def push_to_remote [new_version: string] {
     }
 }
 
-# 获取仓库URL
-def get_repo_url [] {
-    try {
-        let url = git config --get remote.origin.url | str trim
-        let clean_url = $url 
-            | str replace ".git$" "" 
-            | str replace "^https://github.com/" "" 
-            | str replace "^git@github.com:" ""
-        $clean_url
-    } catch {
-        "username/repository"
-    }
-}
-
 # 主函数
 # 主函数将在其他Nu代码之后自动运行
 def main [version?: string] {
@@ -195,7 +181,5 @@ def main [version?: string] {
     create_tag $new_version
     push_to_remote $new_version
 
-    let repo_url = get_repo_url
     print $"($GREEN)发布成功！GitHub Actions 将自动构建并创建 Release($NC)"
-    print $"($YELLOW)构建状态: https://github.com/($repo_url)/actions($NC)"
 }
