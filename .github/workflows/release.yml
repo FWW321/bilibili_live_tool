@@ -75,9 +75,10 @@ jobs:
     - name: Move artifacts to root
       run: |
         ls -la
-        mv bilibili_live_tool-linux-x86_64/bilibili_live_tool ./bilibili_live_tool-linux-x86_64
-        mv bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool.exe ./bilibili_live_tool-windows-x86_64.exe
-        mv bilibili_live_tool-macos-aarch64/bilibili_live_tool ./bilibili_live_tool-macos-aarch64
+        cp bilibili_live_tool-linux-x86_64/bilibili_live_tool ./bilibili_live_tool-linux-x86_64
+        cp bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool.exe ./bilibili_live_tool-windows-x86_64.exe
+        cp bilibili_live_tool-macos-aarch64/bilibili_live_tool ./bilibili_live_tool-macos-aarch64
+        chmod +x ./bilibili_live_tool-linux-x86_64 ./bilibili_live_tool-macos-aarch64
         ls -la
 
     - name: Get version from tag
