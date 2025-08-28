@@ -136,7 +136,7 @@ def get_repo_url [] {
 }
 
 # 主函数
-def main [...args: string] {
+def main [version?: string] {
     print $"($YELLOW)哔哩哔哩直播工具 - 发布脚本($NC)"
     print "=================================="
 
@@ -154,7 +154,7 @@ def main [...args: string] {
     print $"($YELLOW)当前版本: ($current_version)($NC)"
 
     # 获取新版本号
-    let input_version = if ($args | length) > 0 { $args.0 } else { "" }
+    let input_version = if ($version != null) { $version } else { "" }
     let has_explicit_version = ($input_version != "" and $input_version != null)
     let new_version = get_new_version $current_version $input_version
     
