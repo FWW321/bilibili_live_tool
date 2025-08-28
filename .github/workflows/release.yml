@@ -72,8 +72,10 @@ jobs:
     - name: Download all artifacts
       uses: actions/download-artifact@v4
 
-    - name: List artifacts
-      run: ls -la artifacts/
+    - name: Move artifacts to root
+      run: |
+        find . -name "bilibili_live_tool*" -type f -exec mv {} . \;
+        ls -la
 
     - name: Get version from tag
       id: get_version
@@ -90,9 +92,9 @@ jobs:
           - **Windows**: `bilibili_live_tool-windows-x86_64.exe`
           - **macOS**: `bilibili_live_tool-macos-aarch64`
         files: |
-          artifacts/bilibili_live_tool-linux-x86_64
-          artifacts/bilibili_live_tool-windows-x86_64.exe
-          artifacts/bilibili_live_tool-macos-aarch64
+          bilibili_live_tool-linux-x86_64
+          bilibili_live_tool-windows-x86_64.exe
+          bilibili_live_tool-macos-aarch64
         generate_release_notes: false
         draft: false
         prerelease: false
