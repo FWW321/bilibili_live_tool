@@ -164,7 +164,8 @@ def main [...args: string] {
     }
 
     # 确认操作
-    let confirm = input $"是否继续发布版本 ($new_version)? (y/N): "
+    print $"是否继续发布版本 ($new_version)? (y/N): "
+    let confirm = (input)
     
     if ($confirm | str downcase) != "y" {
         print "取消发布"
