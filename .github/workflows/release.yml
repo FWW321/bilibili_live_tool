@@ -35,31 +35,11 @@ jobs:
             asset_name: bilibili_live_tool-linux-x86_64
             target: x86_64-unknown-linux-gnu
             suffix: ""
-          - os: ubuntu-latest
-            artifact_name: bilibili_live_tool
-            asset_name: bilibili_live_tool-linux-aarch64
-            target: aarch64-unknown-linux-gnu
-            suffix: ""
           - os: windows-latest
             artifact_name: bilibili_live_tool.exe
             asset_name: bilibili_live_tool-windows-x86_64.exe
             target: x86_64-pc-windows-msvc
             suffix: ".exe"
-          - os: windows-latest
-            artifact_name: bilibili_live_tool.exe
-            asset_name: bilibili_live_tool-windows-aarch64.exe
-            target: aarch64-pc-windows-msvc
-            suffix: ".exe"
-          - os: macos-latest
-            artifact_name: bilibili_live_tool
-            asset_name: bilibili_live_tool-macos-x86_64
-            target: x86_64-apple-darwin
-            suffix: ""
-          - os: macos-latest
-            artifact_name: bilibili_live_tool
-            asset_name: bilibili_live_tool-macos-aarch64
-            target: aarch64-apple-darwin
-            suffix: ""
 
     steps:
     - name: Checkout code
@@ -80,27 +60,12 @@ jobs:
           target
         key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Install cross (for cross-compilation)
-      run: cargo install cross --git https://github.com/cross-rs/cross
-
     - name: Build release binary
-      run: |
-        if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
-          cargo build --release --target ${{ matrix.target }}
-        else
-          cross build --release --target ${{ matrix.target }}
-        fi
-      shell: bash
+      run: cargo build --release --target ${{ matrix.target }}
 
-    - name: Strip debug symbols (Linux/macOS)
-      if: matrix.os != 'windows-latest'
-      run: |
-        if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
-          strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
-        else
-          strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
-        fi
-      shell: bash
+    - name: Strip debug symbols (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
 
     - name: Create archive (Unix)
       if: matrix.os != 'windows-latest'
@@ -149,24 +114,8 @@ jobs:
           cp bilibili_live_tool-linux-x86_64/bilibili_live_tool-linux-x86_64.tar.gz release-assets/
         fi
         
-        if [ -f "bilibili_live_tool-linux-aarch64/bilibili_live_tool-linux-aarch64.tar.gz" ]; then
-          cp bilibili_live_tool-linux-aarch64/bilibili_live_tool-linux-aarch64.tar.gz release-assets/
-        fi
-        
         if [ -f "bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool-windows-x86_64.exe.zip" ]; then
           cp bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool-windows-x86_64.exe.zip release-assets/
-        fi
-        
-        if [ -f "bilibili_live_tool-windows-aarch64.exe/bilibili_live_tool-windows-aarch64.exe.zip" ]; then
-          cp bilibili_live_tool-windows-aarch64.exe/bilibili_live_tool-windows-aarch64.exe.zip release-assets/
-        fi
-        
-        if [ -f "bilibili_live_tool-macos-x86_64/bilibili_live_tool-macos-x86_64.tar.gz" ]; then
-          cp bilibili_live_tool-macos-x86_64/bilibili_live_tool-macos-x86_64.tar.gz release-assets/
-        fi
-        
-        if [ -f "bilibili_live_tool-macos-aarch64/bilibili_live_tool-macos-aarch64.tar.gz" ]; then
-          cp bilibili_live_tool-macos-aarch64/bilibili_live_tool-macos-aarch64.tar.gz release-assets/
         fi
         
         ls -la release-assets/
@@ -195,24 +144,17 @@ jobs:
           
           #### Linux
           - [x86_64](bilibili_live_tool-linux-x86_64.tar.gz)
-          - [aarch64](bilibili_live_tool-linux-aarch64.tar.gz)
           
           #### Windows
           - [x86_64](bilibili_live_tool-windows-x86_64.exe.zip)
-          - [aarch64](bilibili_live_tool-windows-aarch64.exe.zip)
-          
-          #### macOS
-          - [x86_64](bilibili_live_tool-macos-x86_64.tar.gz)
-          - [aarch64](bilibili_live_tool-macos-aarch64.tar.gz)
           
           ### 使用说明
-          - Linux/macOS: 下载后解压，运行 `./bilibili_live_tool`
+          - Linux: 下载后解压，运行 `./bilibili_live_tool`
           - Windows: 下载后解压，运行 `bilibili_live_tool.exe`
           
           ### 系统要求
-          - 支持 x86_64 和 ARM64 架构
+          - x86_64 架构
           - Windows 10+
-          - macOS 10.15+
           - Linux (glibc 2.31+)
         files: release-assets/*
         generate_release_notes: true
@@ -246,15 +188,9 @@ jobs:
         
         ### Linux
         - [x86_64](bilibili_live_tool-linux-x86_64.tar.gz)
-        - [aarch64](bilibili_live_tool-linux-aarch64.tar.gz)
         
         ### Windows
         - [x86_64](bilibili_live_tool-windows-x86_64.exe.zip)
-        - [aarch64](bilibili_live_tool-windows-aarch64.exe.zip)
-        
-        ### macOS
-        - [x86_64](bilibili_live_tool-macos-x86_64.tar.gz)
-        - [aarch64](bilibili_live_tool-macos-aarch64.tar.gz)
         
         ## 构建信息
         - 构建时间: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
