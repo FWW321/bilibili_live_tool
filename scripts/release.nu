@@ -136,7 +136,7 @@ def push_to_remote [new_version: string] {
 def get_repo_url [] {
     try {
         let url = git config --get remote.origin.url | str trim
-        let clean_url = $url | str replace ".git$" "" | str replace "^https://github.com/" ""
+        let clean_url = $url | str replace ".git$" "" | str replace "^https://github.com/" "" | str replace "^git@github.com:" ""
         $clean_url
     } catch {
         "username/repository"
