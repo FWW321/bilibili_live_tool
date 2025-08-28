@@ -151,16 +151,16 @@ def main [...args: string] {
 
     # 获取当前版本
     let current_version = get_current_version
-    print $"($YELLOW)当前版本: $current_version($NC)"
+    print $"($YELLOW)当前版本: ($current_version)($NC)"
 
     # 获取新版本号
     let input_version = if ($args | length) > 0 { $args.0 } else { "" }
     let new_version = get_new_version $current_version $input_version
     
     if ($new_version == $current_version) {
-        print $"($YELLOW)自动增加版本号: $current_version → $new_version($NC)"
+        print $"($YELLOW)自动增加版本号: ($current_version) → ($new_version)($NC)"
     } else {
-        print $"($YELLOW)指定版本号: $new_version($NC)"
+        print $"($YELLOW)指定版本号: ($new_version)($NC)"
     }
 
     # 确认操作
