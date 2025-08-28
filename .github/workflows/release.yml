@@ -111,9 +111,15 @@ jobs:
         body: |
           ## Release ${{ steps.get_version.outputs.VERSION }}
           
-          ### Downloads
-          - [Linux x86_64](bilibili_live_tool-linux-x86_64)
-          - [Windows x86_64](bilibili_live_tool-windows-x86_64.exe)
+          ### 下载链接
+
+
+          #### Linux
+          - [Linux x86_64](https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/bilibili_live_tool-linux-x86_64)
+
+          #### Windows
+          - [Windows x86_64](https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/bilibili_live_tool-windows-x86_64.exe)
+          
         files: release-assets/*
         generate_release_notes: true
         draft: false
