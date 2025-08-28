@@ -155,9 +155,10 @@ def main [...args: string] {
 
     # 获取新版本号
     let input_version = if ($args | length) > 0 { $args.0 } else { "" }
+    let has_explicit_version = ($input_version != "" and $input_version != null)
     let new_version = get_new_version $current_version $input_version
     
-    if ($new_version == $current_version) {
+    if (not $has_explicit_version) {
         print $"($YELLOW)自动增加版本号: ($current_version) → ($new_version)($NC)"
     } else {
         print $"($YELLOW)指定版本号: ($new_version)($NC)"
