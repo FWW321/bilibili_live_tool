@@ -17,13 +17,16 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: bilibili_live_tool
-            asset_name: bilibili_live_tool-linux-amd64
+            asset_name: bilibili_live_tool-linux-x86_64
+            target: x86_64-unknown-linux-gnu
           - os: windows-latest
             artifact_name: bilibili_live_tool.exe
-            asset_name: bilibili_live_tool-windows-amd64.exe
+            asset_name: bilibili_live_tool-windows-x86_64.exe
+            target: x86_64-pc-windows-msvc
           - os: macos-latest
             artifact_name: bilibili_live_tool
-            asset_name: bilibili_live_tool-macos-amd64
+            asset_name: bilibili_live_tool-macos-aarch64
+            target: aarch64-apple-darwin
 
     steps:
     - name: Checkout code
@@ -44,17 +47,17 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Build release binary
-      run: cargo build --release
+      run: cargo build --release --target ${{ matrix.target }}
 
     - name: Strip debug symbols (Linux/macOS)
       if: matrix.os != 'windows-latest'
-      run: strip target/release/${{ matrix.artifact_name }}
+      run: strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.asset_name }}
-        path: target/release/${{ matrix.artifact_name }}
+        path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
 
   create-release:
     name: Create Release
@@ -113,9 +116,9 @@ jobs:
           bilibili_live_tool-windows-amd64.exe
           ```
         files: |
-          artifacts/bilibili_live_tool-linux-amd64/bilibili_live_tool-linux-amd64
-          artifacts/bilibili_live_tool-windows-amd64.exe/bilibili_live_tool-windows-amd64.exe
-          artifacts/bilibili_live_tool-macos-amd64/bilibili_live_tool-macos-amd64
+          artifacts/bilibili_live_tool-linux-x86_64/bilibili_live_tool
+          artifacts/bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool.exe
+          artifacts/bilibili_live_tool-macos-aarch64/bilibili_live_tool
         draft: false
         prerelease: false
       env:
