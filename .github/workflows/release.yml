@@ -25,7 +25,7 @@ jobs:
             target: x86_64-pc-windows-msvc
           - os: macos-latest
             artifact_name: bilibili_live_tool
-            asset_name: bilibili_live_tool-macos-aarch64.dmg
+            asset_name: bilibili_live_tool-macos-aarch64
             target: aarch64-apple-darwin
 
     steps:
@@ -65,31 +65,41 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
+      
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
-        path: .
-
+        path: artifacts
+        
+    - name: List structure of downloaded artifacts
+      run: |
+        echo "Artifacts directory structure:"
+        find artifacts -type f -exec ls -la {} \;
+        
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ steps.get_version.outputs.VERSION }}
-        name: Release ${{ steps.get_version.outputs.VERSION }}
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
         body: |
-          ## Changes in ${{ steps.get_version.outputs.VERSION }}
+          ## Changes in ${{ github.ref_name }}
           
           ## Downloads
           - **Linux**: `bilibili_live_tool-linux-x86_64`
           - **Windows**: `bilibili_live_tool-windows-x86_64.exe`
-          - **macOS**: `bilibili_live_tool-macos-aarch64.dmg`
+          - **macOS**: `bilibili_live_tool-macos-aarch64`
         files: |
           artifacts/bilibili_live_tool-linux-x86_64/bilibili_live_tool
           artifacts/bilibili_live_tool-windows-x86_64.exe/bilibili_live_tool.exe
-          artifacts/bilibili_live_tool-macos-aarch64.dmg/bilibili_live_tool.dmg
+          artifacts/bilibili_live_tool-macos-aarch64/bilibili_live_tool
         generate_release_notes: false
         draft: false
         prerelease: false
